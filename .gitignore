@@ -1,0 +1,11 @@
+Debug/
+logs/
+*.opensdf
+*.sdf
+*.ncb
+*.suo
+*.o
+*.vcproj.lpstudy-PC.Administrator.user
+dsg-12-13-linux-windows.tar.gz
+main.exe
+interface-example.c
