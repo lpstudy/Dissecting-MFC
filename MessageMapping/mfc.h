@@ -10,6 +10,9 @@ struct CRuntimeClass;
 class CObject;
 class CArchive;
 class CCmdTarget;
+class CView;
+class CWinApp;
+class CWnd;
 
 struct AFX_CLASSINIT
 { AFX_CLASSINIT(CRuntimeClass* pNewClass); };
@@ -115,11 +118,18 @@ enum AfxSig
 {
 #define ON_COMMAND(id, memberFxn) \
 { WM_COMMAND, 0, (WORD)id, (WORD)id, AfxSig_vv, (AFX_PMSG)memberFxn },
+#define ON_NON_COMMAND(message, id, memberFxn) \
+{ message, 0, (WORD)id, (WORD)id, AfxSig_vv, (AFX_PMSG)memberFxn },
 #define END_MESSAGE_MAP() \
 { 0, 0, 0, 0, AfxSig_end, (AFX_PMSG)0 } \
-};
+};\
 
-#define WM_COMMAND	  0x0111
+
+#define WM_COMMAND 0x0111
+#define WM_CREATE 0x0001
+#define WM_PAINT 0x000F
+#define WM_NOTIFY 0x004E
+
 #define CObjectid	  0xffff
 #define CCmdTargetid  1
 #define CWinThreadid  11
@@ -132,6 +142,17 @@ enum AfxSig
 #define CMyViewid     1221
 #define CDocumentid   13
 #define CMyDocid      131
+
+void PrintAllClasses();
+CWinApp* AfxGetApp();
+LRESULT AfxWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam,
+				   CWnd *pWnd);
+LRESULT AfxCallWndProc(CWnd* pWnd, HWND hWnd, UINT nMsg,
+					   WPARAM wParam, LPARAM lParam);
+extern void printlpEntries(AFX_MSGMAP_ENTRY* lpEntry);
+extern BOOL calllpEntries(AFX_MSGMAP_ENTRY* lpEntry, UINT nMessage, UINT nId, CCmdTarget* handle);
+extern void MsgMapPrinting(AFX_MSGMAP* pMessageMap);
+
 //CObject
 class CObject
 {
@@ -178,6 +199,21 @@ public:
 	virtual void SayHello()
 	{
 		TRACE_FUCTION_AND_LINE("Hello!");
+	}
+	virtual BOOL OnCmdMsg(UINT nID, int nCode)
+	{
+		TRACE_FUCTION_AND_LINE("");
+		// Now look through message map to see if it applies to us
+		AFX_MSGMAP* pMessageMap;
+		AFX_MSGMAP_ENTRY* lpEntry;
+		for (pMessageMap = GetMessageMap(); pMessageMap != NULL;
+			pMessageMap = pMessageMap->pBaseMessageMap)
+		{
+			lpEntry = pMessageMap->lpEntries;
+			printlpEntries(lpEntry);
+		}
+
+		return FALSE; // not handled
 	}
 };
 
@@ -256,6 +292,14 @@ public:
 	{
 		TRACE_FUCTION_AND_LINE("Hello!");
 	}
+	virtual BOOL OnCmdMsg(UINT nID, int nCode)
+	{
+		TRACE_FUCTION_AND_LINE("");
+		if (CCmdTarget::OnCmdMsg(nID, nCode))
+			return TRUE;
+
+		return FALSE;
+	}
 };
 //CObject->CCmdTarget->CWinThread->CWinApp
 
@@ -278,6 +322,15 @@ public:
 	{
 		TRACE_FUCTION_AND_LINE("Hello!");
 	}
+	virtual BOOL OnCmdMsg(UINT nID, int nCode)
+	{
+		TRACE_FUCTION_AND_LINE("");
+		if (CCmdTarget::OnCmdMsg(nID, nCode))
+			return TRUE;
+
+		return FALSE;
+	}
+
 };
 //CObject->CCmdTarget->CDocument
 
@@ -314,10 +367,101 @@ public:
 		return true;
 	}
 public:
+	LRESULT WindowProc(UINT nMsg, WPARAM wParam, LPARAM lParam)
+	{
+		TRACE_FUCTION_AND_LINE("");
+		AFX_MSGMAP* pMessageMap;
+		AFX_MSGMAP_ENTRY* lpEntry;
+
+		if (nMsg == WM_COMMAND) // special case for commands
+		{
+			TRACE_FUCTION_AND_LINE("WM_COMMAND message");
+			if (OnCommand(wParam, lParam))
+				return 1L; // command handled
+			else
+				return (LRESULT)DefWindowProc(nMsg, wParam, lParam);
+		}
+
+		TRACE_FUCTION_AND_LINE("WM_XXXXXX message");
+		pMessageMap = GetMessageMap();
+
+		UINT nMessage= nMsg;
+		UINT nId  = wParam;
+
+		for (; pMessageMap != NULL;
+			pMessageMap = pMessageMap->pBaseMessageMap)
+		{
+			lpEntry = pMessageMap->lpEntries;
+			if(calllpEntries(lpEntry,nMessage, nId, this))
+				return 1L;
+
+		}
+		return 0; // add by JJHou. if find, should call lpEntry->pfn,
+		// otherwise should call DefWindowProc.
+	}
+
+	LRESULT CWnd::DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		TRACE_FUCTION_AND_LINE("");
+		return TRUE;
+	}
+
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam)//begin virtual
+	{
+		// ...
+		TRACE_FUCTION_AND_LINE("");
+		return OnCmdMsg(0, 0);
+	}
+	virtual BOOL OnCmdMsg(UINT nID, int nCode)
+	{
+		TRACE_FUCTION_AND_LINE("");
+		if (CCmdTarget::OnCmdMsg(nID, nCode))
+			return TRUE;
+
+		return FALSE;
+	}
+public:
 	virtual void SayHello()
 	{
 		TRACE_FUCTION_AND_LINE("Hello!");
 	}
+};
+
+//CView
+class CView : public CWnd
+{
+	DECLARE_DYNAMIC(CView)
+	DECLARE_MESSAGE_MAP()
+public:
+	CView()
+	{
+		//TRACE_FUCTION_AND_LINE("");
+	}
+	~CView()
+	{
+		//TRACE_FUCTION_AND_LINE("");
+	}
+public:
+	CDocument* m_pDocument;
+	virtual void SayHello()
+	{
+		TRACE_FUCTION_AND_LINE("Hello!");
+	}
+	BOOL OnCmdMsg(UINT nID, int nCode)
+	{
+		TRACE_FUCTION_AND_LINE("");
+		if (CWnd::OnCmdMsg(nID, nCode))
+			return TRUE;
+
+		BOOL bHandled = FALSE;
+		bHandled = m_pDocument->OnCmdMsg(nID, nCode);
+		return bHandled;
+	}
+	void OnPaint()
+	{
+		TRACE_FUCTION_AND_LINE("");
+	}
+	//friend CFrameWnd;
 };
 
 //CFrameWnd
@@ -348,35 +492,47 @@ public:
 		return true;
 	}
 public:
+	CView* m_pViewActive;       // current active view
 	virtual void SayHello()
 	{
 		TRACE_FUCTION_AND_LINE("Hello!");
 	}
+	CView* GetActiveView() const
+	{
+		return m_pViewActive;
+	}
+	BOOL OnCmdMsg(UINT nID, int nCode)
+	{
+		TRACE_FUCTION_AND_LINE("");
+		// pump through current view FIRST
+		CView* pView = GetActiveView();
+		if (pView->OnCmdMsg(nID, nCode))
+			return TRUE;
+
+		// then pump through frame
+		if (CWnd::OnCmdMsg(nID, nCode))
+			return TRUE;
+
+		// last but not least, pump through app
+		CWinApp* pApp = AfxGetApp();
+		if (pApp->OnCmdMsg(nID, nCode))
+			return TRUE;
+
+		return FALSE;
+	}
+	BOOL OnCommand(WPARAM wParam, LPARAM lParam)
+	{
+		// ...这个有点冗余，通过父类的WindowProc方法，调用OnCommand方法，会进入到当前类，当前类再调用父类的OnCommand，父类的OnCommand再调用OnCmdMsg，再次回到当前类。
+		//这样子的话，实际上还有一个流程，OnCommand的流程
+		// route as normal command
+		return CWnd::OnCommand(wParam, lParam);
+	}
+
+	//friend CView;
 };
 
-//CView
-class CView : public CWnd
-{
-	DECLARE_DYNAMIC(CView)
-	DECLARE_MESSAGE_MAP()
-public:
-	CView()
-	{
-		//TRACE_FUCTION_AND_LINE("");
-	}
-	~CView()
-	{
-		//TRACE_FUCTION_AND_LINE("");
-	}
-public:
-	virtual void SayHello()
-	{
-		TRACE_FUCTION_AND_LINE("Hello!");
-	}
-};
+
 //CObject->CCmdTarget->CWnd->(CFrameWnd,CView)
 
-void PrintAllClasses();
-CWinApp* AfxGetApp();
 
 #endif//__MFC__H__

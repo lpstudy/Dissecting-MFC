@@ -120,6 +120,7 @@ BEGIN_MESSAGE_MAP(CDocument, CCmdTarget)
 END_MESSAGE_MAP()
 BEGIN_MESSAGE_MAP(CView, CWnd)
 	ON_COMMAND(CViewid, 0)
+	ON_NON_COMMAND(WM_PAINT, 0, &CView::OnPaint)
 END_MESSAGE_MAP()
 BEGIN_MESSAGE_MAP(CWinApp, CCmdTarget)
 	ON_COMMAND(CWinAppid, 0)
@@ -139,3 +140,17 @@ AFX_MSGMAP_ENTRY CCmdTarget::_messageEntries[] =
 	{ 0, 0, CCmdTargetid, 0, AfxSig_end, 0 }
 };
 
+//command routing
+LRESULT AfxWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam,
+				   CWnd *pWnd) // last param. pWnd is added by JJHou.
+{
+	TRACE_FUCTION_AND_LINE("AfxWndProc()");
+	return AfxCallWndProc(pWnd, hWnd, nMsg, wParam, lParam);
+}
+LRESULT AfxCallWndProc(CWnd* pWnd, HWND hWnd, UINT nMsg,
+					   WPARAM wParam, LPARAM lParam)
+{
+	TRACE_FUCTION_AND_LINE("AfxCallWndProc()");
+	LRESULT lResult = pWnd->WindowProc(nMsg, wParam, lParam);
+	return lResult;
+}

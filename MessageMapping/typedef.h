@@ -223,16 +223,15 @@ typedef char* LPSTR;
 #endif
 
 #ifndef WPARAM
-#define  UINT WPARAM
+#define WPARAM uint32_t 
 #endif
 #ifndef LPARAM
-#define LONG LPARAM
+#define LPARAM int32_t 
 #endif
 #ifndef LRESULT
-#define LONG LRESULT
+#define LRESULT int32_t 
 #endif
 #ifndef HWND
-#define int HWND
+#define HWND int32_t 
 #endif
-
 #endif //__TYPEDEFINE_H__

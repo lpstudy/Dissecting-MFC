@@ -14,6 +14,9 @@ typedef vector<DWORD> CDWordArray;
 typedef vector<DWORD>::iterator CDWordArrayIter;
 class CMyFrameWnd;
 
+void printlpEntries(AFX_MSGMAP_ENTRY* lpEntry);
+BOOL calllpEntries(AFX_MSGMAP_ENTRY* lpEntry, UINT nMessage, UINT nId, CCmdTarget* handle);
+void MsgMapPrinting(AFX_MSGMAP* pMessageMap);
 
 //CMyFrameWnd
 class CMyFrameWnd : public CFrameWnd
@@ -224,6 +227,5 @@ public:
 	CPoint m_center;
 	UINT m_radius;
 };
-void printlpEntries(AFX_MSGMAP_ENTRY* lpEntry);
-void MsgMapPrinting(AFX_MSGMAP* pMessageMap);
+
 #endif//__MY__H__
