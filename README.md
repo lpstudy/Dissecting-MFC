@@ -1,7 +1,7 @@
-#Dissecting-MFC
+# Dissecting-MFC
 When I was a new guy to learn MFC, I read the book called Dissecting MFC. I like it very much. The author presents the basic principles about how to design and implement MFC mechanisms like ``Dynamic Create``, ``Runtime Type Identification``, ``Message Mapping``, ``Command Routing`` and ``Persistence``.
 
-To be honest, I am deeply impressed by its simplicity and clearity. In MFC, the ``Macors` of C++ functions like a magical dragon. Usually very simple sentence like ``IMPLEMENT_DYNAMIC(CCmdTarget, CObject)`` may involves a bundle of c++ codes.
+To be honest, I am deeply impressed by its simplicity and clearity. In MFC, the ``Macors`` of C++ functions like a magical dragon. Usually very simple sentence like ``IMPLEMENT_DYNAMIC(CCmdTarget, CObject)`` may involves a bundle of c++ codes.
 
 ## Compile and Run
 This program is compiled and run in visual studio 2008. It contains 6 projects. Some simple ``makefile``s are also added to it, which resides in the corresponds project directory. 
